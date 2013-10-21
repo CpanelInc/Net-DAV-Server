@@ -136,17 +136,53 @@ sub get {
 
         # a web browser, then
         my @files = $fs->list($path);
-        my $body;
+        my $body = <<HTML;
+    <table border="1" width="100%">
+      <tr>
+       <th>FileName</th>
+       <th>Size</th>
+       <th>user</th>
+       <th>group</th>
+       <th>permission</th>
+      </tr>     
+HTML
         my $fpath = $path =~ m{/$} ? $path : $path . '/';
         foreach my $file (@files) {
             if ( $fs->test( 'd', $fpath . $file ) ) {
-                $body .= qq|<a href="$file/">$file/</a><br>\n|;
+                #$body .= qq|<a href="$file/">$file/</a><br>\n|;
+                my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat("$fpath/$file");
+                $uid   = getpwuid($uid);
+                $gid   = getpwuid($gid);
+                $mode  = sprintf '%04o', $mode & 07777;
+                $body .= <<HTML2;
+                   <tr>
+                     <td><a href="$file/">$file/</a><br></td>
+                     <td>$size</td>
+                     <td>$uid</td>
+                     <td>$gid</td>
+                     <td>$mode</td>
+                    </tr>
+HTML2
             }
             else {
                 $file =~ s{/$}{};
-                $body .= qq|<a href="$file">$file</a><br>\n|;
+                #$body .= qq|<a href="$file">$file</a><br>\n|;
+                my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size, $atime,$mtime,$ctime,$blksize,$blocks) = stat("$fpath/$file");
+                $uid   = getpwuid($uid);
+                $gid   = getpwuid($gid);
+                $mode  = sprintf '%04o', $mode & 07777;
+                $body .= <<HTML2;
+                   <tr>
+                     <td><a href="$file">$file</a><br></td>
+                     <td>$size</td>
+                     <td>$uid</td>
+                     <td>$gid</td>
+                     <td>$mode</td>
+                    </tr>
+HTML2
             }
         }
+        $body .= "</table>";
         $response->header( 'Content-Type' => 'text/html; charset="utf-8"' );
         $response->content($body);
     }
@@ -926,6 +962,7 @@ Leon Brocard <acme@astray.com>
 
 =head1 MAINTAINERS
 
+  P. Prajith <prajithpalakkuda@gmail.com> ( co-maintainer )
   G. Wade Johnson <wade@cpanel.net>  ( co-maintainer )
   Erin Schoenhals <erin@cpanel.net>  ( co-maintainer )
   Bron Gondwana <perlcode@brong.net> ( co-maintainer )
@@ -948,3 +985,4 @@ the same terms as Perl itself.
 =cut
 
 1
+
